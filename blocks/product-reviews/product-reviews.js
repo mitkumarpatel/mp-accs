@@ -43,7 +43,7 @@ async function fetchReviews(apiBase, sku) {
 }
 
 /**
- * Builds a single review card: title, review text, stars, author.
+ * Builds a single review card: title + stars row, indented review text, author.
  * @param {object} review - Review object from API
  * @returns {HTMLElement} Review card element
  */
@@ -51,29 +51,38 @@ function renderReviewItem(review) {
   const item = document.createElement('article');
   item.className = 'product-reviews__item';
 
+  const head = document.createElement('div');
+  head.className = 'product-reviews__item-head';
+
   const title = document.createElement('h3');
   title.className = 'product-reviews__title';
   title.textContent = review.title;
+
+  const stars = document.createElement('span');
+  stars.className = 'product-reviews__stars';
+  stars.setAttribute('aria-label', `${review.rating} out of 5 stars`);
+  stars.textContent = renderStars(review.rating);
+
+  head.append(title, stars);
+
+  const body = document.createElement('div');
+  body.className = 'product-reviews__body';
 
   const text = document.createElement('p');
   text.className = 'product-reviews__text';
   text.textContent = review.review;
 
-  const stars = document.createElement('div');
-  stars.className = 'product-reviews__stars';
-  stars.setAttribute('aria-label', `${review.rating} out of 5 stars`);
-  stars.textContent = renderStars(review.rating);
-
   const author = document.createElement('p');
   author.className = 'product-reviews__author';
-  author.textContent = review.author || 'Anonymous';
+  author.textContent = `— ${review.author || 'Anonymous'}`;
 
-  item.append(title, text, stars, author);
+  body.append(text, author);
+  item.append(head, body);
   return item;
 }
 
 /**
- * Renders the reviews summary header.
+ * Renders the reviews section header.
  * @param {object} data - Reviews API response
  * @returns {HTMLElement} Header element
  */
@@ -82,22 +91,14 @@ function renderHeader(data) {
   header.className = 'product-reviews__header';
 
   const heading = document.createElement('h2');
-  heading.textContent = 'Customer Reviews';
+  heading.className = 'product-reviews__heading';
+
+  const countLabel = data.reviewCount === 1 ? 'review' : 'reviews';
+  heading.textContent = data.reviewCount > 0
+    ? `Customer Reviews (${data.reviewCount} ${countLabel})`
+    : 'Customer Reviews';
+
   header.append(heading);
-
-  if (data.reviewCount > 0) {
-    const summary = document.createElement('p');
-    summary.className = 'product-reviews__summary';
-
-    const starsSpan = document.createElement('span');
-    starsSpan.className = 'product-reviews__average';
-    starsSpan.textContent = renderStars(Math.round(data.averageRating));
-
-    const countLabel = data.reviewCount === 1 ? 'review' : 'reviews';
-    summary.append(starsSpan, ` (${data.reviewCount} ${countLabel})`);
-    header.append(summary);
-  }
-
   return header;
 }
 
