@@ -16,6 +16,7 @@
       "commerce-companies-enabled": false,
       "commerce-assets-enabled": true,
       "adobe-commerce-optimizer": false,
+      "product-reviews-api-base": "https://748062-106maroongoat-stage.adobeioruntime.net/api/v1/web/product-reviews",
       "analytics": {
         "base-currency-code": "USD",
         "environment": "Testing",

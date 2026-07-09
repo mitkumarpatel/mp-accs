@@ -459,6 +459,10 @@
     ]
   },
   {
+    "id": "product-reviews",
+    "fields": []
+  },
+  {
     "id": "product-list-page",
     "fields": [
       {
