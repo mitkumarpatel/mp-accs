@@ -2,20 +2,14 @@
   margin: var(--spacing-l) 0;
 }
 
-.product-reviews__header h2 {
-  margin: 0 0 var(--spacing-s);
-  font-size: var(--heading-font-size-m);
-}
-
-.product-reviews__summary {
+.product-reviews__heading {
   margin: 0 0 var(--spacing-m);
-  color: var(--dark-color);
-}
-
-.product-reviews__average,
-.product-reviews__stars {
-  color: #f5a623;
-  letter-spacing: 0.05em;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 2px solid var(--color-neutral-300);
+  font-size: var(--heading-font-size-l);
+  font-weight: 700;
+  color: var(--color-neutral-900);
+  line-height: 1.3;
 }
 
 .product-reviews__list {
@@ -24,39 +18,62 @@
 }
 
 .product-reviews__item {
-  padding: var(--spacing-m);
-  border: 1px solid var(--light-color);
-  border-radius: 4px;
-  background: var(--background-color);
+  padding: var(--spacing-s) 0;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.product-reviews__item:last-child {
+  border-bottom: none;
+}
+
+.product-reviews__item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs) var(--spacing-s);
+  margin-bottom: var(--spacing-xs);
 }
 
 .product-reviews__title {
-  margin: 0 0 var(--spacing-xs);
+  margin: 0;
   font-size: var(--body-font-size-m);
-}
-
-.product-reviews__text {
-  margin: 0 0 var(--spacing-s);
-  line-height: 1.5;
+  font-weight: 600;
+  color: var(--color-neutral-800);
 }
 
 .product-reviews__stars {
+  color: #f5a623;
+  font-size: var(--body-font-size-s);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.product-reviews__body {
+  padding-left: var(--spacing-m);
+  border-left: 2px solid var(--color-neutral-200);
+}
+
+.product-reviews__text {
   margin: 0 0 var(--spacing-xs);
-  font-size: var(--body-font-size-l);
+  font-size: var(--body-font-size-s);
+  line-height: 1.6;
+  color: var(--color-neutral-700);
 }
 
 .product-reviews__author {
   margin: 0;
-  font-size: var(--body-font-size-s);
-  color: var(--dark-color);
+  font-size: 0.75rem;
+  color: var(--color-neutral-600);
   font-style: italic;
+  text-align: right;
 }
 
 .product-reviews__message {
   margin: 0;
-  color: var(--dark-color);
+  font-size: var(--body-font-size-s);
+  color: var(--color-neutral-700);
 }
 
 .product-reviews__message--error {
-  color: var(--color-red);
+  color: var(--color-alert-500);
 }
