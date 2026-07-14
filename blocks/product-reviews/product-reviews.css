@@ -227,8 +227,8 @@
   cursor: not-allowed;
 }
 
-@media (max-width >= 900px) {
+/*@media (max-width >= 900px) {
   .product-reviews__form {
     padding: var(--spacing-xbig) var(--spacing-xxbig);
-  }
+  }*/
 }
