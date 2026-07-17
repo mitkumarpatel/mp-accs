@@ -21,16 +21,22 @@ await initializeDropin(async () => {
     langDefinitions,
     models: {
       CartModel: {
-        transformer: (data) => ({
-          customFees: (data?.prices?.custom_fees || []).map((fee) => ({
-            code: fee?.code,
-            label: fee?.label,
-            amount: {
-              value: fee?.amount?.value,
-              currency: fee?.amount?.currency,
-            },
-          })),
-        }),
+        transformer: (data) => {
+          // Always set an array so disable clears any previous customFees on the model.
+          const rawFees = data?.prices?.custom_fees;
+          return {
+            customFees: Array.isArray(rawFees)
+              ? rawFees.map((fee) => ({
+                code: fee?.code,
+                label: fee?.label,
+                amount: {
+                  value: fee?.amount?.value,
+                  currency: fee?.amount?.currency,
+                },
+              }))
+              : [],
+          };
+        },
       },
     },
   });
