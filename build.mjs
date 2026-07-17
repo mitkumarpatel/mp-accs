@@ -5,7 +5,23 @@ overrideGQLOperations([
   {
     npm: '@dropins/storefront-cart',
     skipFragments: ['DOWNLOADABLE_CART_ITEMS_FRAGMENT'],
-    operations: [],
+    operations: [
+      // Totals Collector custom fees (Brainvire Extra Fees)
+      `
+      fragment CART_FRAGMENT on Cart {
+        prices {
+          custom_fees {
+            code
+            label
+            amount {
+              value
+              currency
+            }
+          }
+        }
+      }
+      `,
+    ],
   },
   {
     npm: '@dropins/storefront-order',

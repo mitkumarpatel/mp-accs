@@ -16,6 +16,22 @@ await initializeDropin(async () => {
     },
   };
 
-  // Initialize cart
-  return initializers.mountImmediately(initialize, { langDefinitions });
+  // Initialize cart (map GraphQL custom_fees onto CartModel.customFees)
+  return initializers.mountImmediately(initialize, {
+    langDefinitions,
+    models: {
+      CartModel: {
+        transformer: (data) => ({
+          customFees: (data?.prices?.custom_fees || []).map((fee) => ({
+            code: fee?.code,
+            label: fee?.label,
+            amount: {
+              value: fee?.amount?.value,
+              currency: fee?.amount?.currency,
+            },
+          })),
+        }),
+      },
+    },
+  });
 })();
