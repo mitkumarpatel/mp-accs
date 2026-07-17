@@ -34,6 +34,7 @@ import '../../scripts/initializers/wishlist.js';
 
 import { readBlockConfig } from '../../scripts/aem.js';
 import { fetchPlaceholders, rootLink, getProductLink } from '../../scripts/commerce.js';
+import { appendCustomFeeLineItems } from '../../scripts/order-summary-custom-fees.js';
 
 export default async function decorate(block) {
   // Configuration
@@ -254,6 +255,7 @@ export default async function decorate(block) {
     // Order Summary
     provider.render(OrderSummary, {
       routeCheckout: checkoutURL ? () => rootLink(checkoutURL) : undefined,
+      updateLineItems: appendCustomFeeLineItems,
       slots: {
         EstimateShipping: async (ctx) => {
           if (enableEstimateShipping === 'true') {

@@ -68,6 +68,7 @@ import {
   fetchPlaceholders,
   rootLink,
 } from '../../scripts/commerce.js';
+import { appendCustomFeeLineItems } from '../../scripts/order-summary-custom-fees.js';
 
 // Constants
 import {
@@ -467,6 +468,7 @@ export const renderCartGiftOptions = (ctx) => {
 export const renderOrderSummary = async (container) => renderContainer(
   CONTAINERS.ORDER_SUMMARY,
   async () => CartProvider.render(OrderSummary, {
+    updateLineItems: appendCustomFeeLineItems,
     slots: {
       EstimateShipping: renderEstimateShipping,
       Coupons: renderCartCoupons,
