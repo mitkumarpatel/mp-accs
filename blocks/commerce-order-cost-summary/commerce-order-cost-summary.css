@@ -4,3 +4,8 @@
 .commerce-order-cost-summary {
     margin-bottom: var(--spacing-small);
 }
+
+/* Extra Fee row injected when order grand total includes OOPE custom fees */
+.order-cost-summary-content__description--custom-fee {
+    display: block;
+}
