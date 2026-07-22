@@ -65,12 +65,13 @@ export function deriveOrderCustomFees(order) {
 
 function formatMoney(amount, currency) {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
+      currencyDisplay: 'narrowSymbol',
     }).format(amount);
   } catch {
-    return `${currency || ''} ${amount.toFixed(2)}`.trim();
+    return `$${(Number(amount) || 0).toFixed(2)}`;
   }
 }
 
