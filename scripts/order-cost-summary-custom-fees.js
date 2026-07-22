@@ -78,25 +78,39 @@ function removeInjectedRows(root) {
   root.querySelectorAll(`[${FEE_ROW_ATTR}]`).forEach((el) => el.remove());
 }
 
-function getCostSummaryContent(block) {
+function getTotalRow(block) {
   const content = block.querySelector('.order-cost-summary-content');
   if (!content) {
     return null;
   }
-  // Skip skeleton markup — Preact will replace it and wipe injected nodes.
   if (
     content.classList.contains('order-cost-summary-content-skeleton')
     || content.querySelector('.dropin-skeleton, [class*="Skeleton"]')
   ) {
     return null;
   }
-  const totalRow = content.querySelector(
+  return content.querySelector(
     '.order-cost-summary-content__description--total, .order-cost-summary-content__description--total-free',
   );
-  if (!totalRow) {
-    return null;
-  }
-  return { content, totalRow };
+}
+
+function buildFeeRow(fee) {
+  const row = document.createElement('div');
+  row.className = 'order-cost-summary-content__description order-cost-summary-content__description--custom-fee';
+  row.setAttribute(FEE_ROW_ATTR, 'true');
+
+  const header = document.createElement('div');
+  header.className = 'order-cost-summary-content__description--header';
+
+  const labelEl = document.createElement('span');
+  labelEl.textContent = fee.label;
+
+  const amountEl = document.createElement('span');
+  amountEl.textContent = formatMoney(fee.amount, fee.currency);
+
+  header.append(labelEl, amountEl);
+  row.append(header);
+  return row;
 }
 
 /**
@@ -107,36 +121,38 @@ function getCostSummaryContent(block) {
  * @returns {boolean} true when summary is ready (injected or nothing to show)
  */
 export function injectOrderCustomFeeRows(block, order) {
-  const ready = getCostSummaryContent(block);
-  if (!ready) {
+  const totalRow = getTotalRow(block);
+  if (!totalRow || !totalRow.parentNode) {
     return false;
   }
 
-  const { content, totalRow } = ready;
-  removeInjectedRows(content);
+  removeInjectedRows(block);
 
   const fees = deriveOrderCustomFees(order);
   if (fees.length === 0) {
     return true;
   }
 
+  // If rows already match, skip to avoid MutationObserver loops.
+  const existing = [...block.querySelectorAll(`[${FEE_ROW_ATTR}]`)];
+  if (
+    existing.length === fees.length
+    && existing.every((el, i) => el.textContent?.includes(String(fees[i].amount)))
+  ) {
+    return true;
+  }
+
   fees.forEach((fee) => {
-    const row = document.createElement('div');
-    row.className = 'order-cost-summary-content__description order-cost-summary-content__description--custom-fee';
-    row.setAttribute(FEE_ROW_ATTR, 'true');
-
-    const header = document.createElement('div');
-    header.className = 'order-cost-summary-content__description--header';
-
-    const labelEl = document.createElement('span');
-    labelEl.textContent = fee.label;
-
-    const amountEl = document.createElement('span');
-    amountEl.textContent = formatMoney(fee.amount, fee.currency);
-
-    header.append(labelEl, amountEl);
-    row.append(header);
-    content.insertBefore(row, totalRow);
+    // Re-query parent in case DOM shifted during previous insert.
+    const currentTotal = getTotalRow(block);
+    if (!currentTotal?.parentNode) {
+      return;
+    }
+    try {
+      currentTotal.parentNode.insertBefore(buildFeeRow(fee), currentTotal);
+    } catch {
+      // Ignore transient DOM races during Preact re-render.
+    }
   });
 
   return true;
@@ -150,36 +166,61 @@ export function injectOrderCustomFeeRows(block, order) {
  */
 export function watchAndInjectOrderCustomFees(block) {
   let latestOrder = null;
+  let injectScheduled = false;
+  let injecting = false;
+
   if (typeof events.lastPayload === 'function') {
     latestOrder = events.lastPayload('order/data') || null;
   }
 
   const tryInject = () => {
-    if (!latestOrder) {
+    if (!latestOrder || injecting) {
       return;
     }
-    injectOrderCustomFeeRows(block, latestOrder);
+    injecting = true;
+    try {
+      injectOrderCustomFeeRows(block, latestOrder);
+    } finally {
+      injecting = false;
+    }
+  };
+
+  const scheduleInject = () => {
+    if (injectScheduled) {
+      return;
+    }
+    injectScheduled = true;
+    requestAnimationFrame(() => {
+      injectScheduled = false;
+      tryInject();
+    });
   };
 
   events.on(
     'order/data',
     (order) => {
       latestOrder = order;
-      // Defer so Preact can finish painting the cost summary first.
-      requestAnimationFrame(() => {
-        tryInject();
-        setTimeout(tryInject, 50);
-        setTimeout(tryInject, 200);
-        setTimeout(tryInject, 500);
-      });
+      scheduleInject();
+      setTimeout(scheduleInject, 100);
+      setTimeout(scheduleInject, 300);
     },
     { eager: true },
   );
 
-  const observer = new MutationObserver(() => {
-    tryInject();
+  const observer = new MutationObserver((mutations) => {
+    // Ignore mutations caused only by our fee rows.
+    const relevant = mutations.some((m) => {
+      const nodes = [...m.addedNodes, ...m.removedNodes];
+      return nodes.some(
+        (node) => node.nodeType === 1
+          && !(node instanceof Element && node.hasAttribute?.(FEE_ROW_ATTR)),
+      );
+    });
+    if (relevant) {
+      scheduleInject();
+    }
   });
   observer.observe(block, { childList: true, subtree: true });
 
-  tryInject();
+  scheduleInject();
 }
