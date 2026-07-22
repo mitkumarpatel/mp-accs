@@ -14,7 +14,6 @@ export function deriveOrderCustomFees(order) {
     return [];
   }
 
-  // Prefer explicit fees if a future GraphQL/transformer field is present.
   if (Array.isArray(order.customFees) && order.customFees.length > 0) {
     return order.customFees
       .map((fee) => ({
@@ -33,7 +32,11 @@ export function deriveOrderCustomFees(order) {
   const subtotal = Number(
     order.subtotalExclTax?.value ?? order.subtotalInclTax?.value ?? 0,
   );
-  const shipping = Number(order.totalShipping?.value ?? 0);
+  const shipping = Number(
+    order.totalShipping?.value
+      ?? order.shipping?.amount
+      ?? 0,
+  );
   const tax = Number(order.totalTax?.value ?? 0);
   const discounts = (order.discounts || []).reduce(
     (sum, row) => sum + Math.abs(Number(row?.amount?.value || 0)),
@@ -75,28 +78,47 @@ function removeInjectedRows(root) {
   root.querySelectorAll(`[${FEE_ROW_ATTR}]`).forEach((el) => el.remove());
 }
 
+function getCostSummaryContent(block) {
+  const content = block.querySelector('.order-cost-summary-content');
+  if (!content) {
+    return null;
+  }
+  // Skip skeleton markup — Preact will replace it and wipe injected nodes.
+  if (
+    content.classList.contains('order-cost-summary-content-skeleton')
+    || content.querySelector('.dropin-skeleton, [class*="Skeleton"]')
+  ) {
+    return null;
+  }
+  const totalRow = content.querySelector(
+    '.order-cost-summary-content__description--total, .order-cost-summary-content__description--total-free',
+  );
+  if (!totalRow) {
+    return null;
+  }
+  return { content, totalRow };
+}
+
 /**
  * Insert Extra Fee row(s) into Order Cost Summary before the Total row.
  *
  * @param {HTMLElement} block commerce-order-cost-summary block
  * @param {object} order order/data payload
+ * @returns {boolean} true when summary is ready (injected or nothing to show)
  */
 export function injectOrderCustomFeeRows(block, order) {
-  const content = block.querySelector('.order-cost-summary-content');
-  if (!content) {
+  const ready = getCostSummaryContent(block);
+  if (!ready) {
     return false;
   }
 
+  const { content, totalRow } = ready;
   removeInjectedRows(content);
 
   const fees = deriveOrderCustomFees(order);
   if (fees.length === 0) {
     return true;
   }
-
-  const totalRow = content.querySelector(
-    '.order-cost-summary-content__description--total, .order-cost-summary-content__description--total-free',
-  );
 
   fees.forEach((fee) => {
     const row = document.createElement('div');
@@ -114,39 +136,50 @@ export function injectOrderCustomFeeRows(block, order) {
 
     header.append(labelEl, amountEl);
     row.append(header);
-
-    if (totalRow) {
-      content.insertBefore(row, totalRow);
-    } else {
-      content.appendChild(row);
-    }
+    content.insertBefore(row, totalRow);
   });
 
   return true;
 }
 
 /**
- * Keep trying until OrderCostSummary has rendered its content, then inject fees.
+ * Re-inject whenever OrderCostSummary (re)renders — Preact replaces DOM and
+ * would otherwise wipe a one-time injection.
  *
  * @param {HTMLElement} block
  */
 export function watchAndInjectOrderCustomFees(block) {
-  const tryInject = (order) => {
-    if (!order) {
+  let latestOrder = null;
+  if (typeof events.lastPayload === 'function') {
+    latestOrder = events.lastPayload('order/data') || null;
+  }
+
+  const tryInject = () => {
+    if (!latestOrder) {
       return;
     }
-    if (injectOrderCustomFeeRows(block, order)) {
-      return;
-    }
-    // Content not ready yet — retry briefly.
-    let attempts = 0;
-    const timer = setInterval(() => {
-      attempts += 1;
-      if (injectOrderCustomFeeRows(block, order) || attempts >= 20) {
-        clearInterval(timer);
-      }
-    }, 100);
+    injectOrderCustomFeeRows(block, latestOrder);
   };
 
-  events.on('order/data', tryInject, { eager: true });
+  events.on(
+    'order/data',
+    (order) => {
+      latestOrder = order;
+      // Defer so Preact can finish painting the cost summary first.
+      requestAnimationFrame(() => {
+        tryInject();
+        setTimeout(tryInject, 50);
+        setTimeout(tryInject, 200);
+        setTimeout(tryInject, 500);
+      });
+    },
+    { eager: true },
+  );
+
+  const observer = new MutationObserver(() => {
+    tryInject();
+  });
+  observer.observe(block, { childList: true, subtree: true });
+
+  tryInject();
 }
