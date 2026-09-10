@@ -4,12 +4,12 @@
       "commerce-endpoint": "https://na1-sandbox.api.commerce.adobe.com/4XR4RKXgJjQXaxUCMC6TN3/graphql",
       "headers": {
         "all": {
-          "Store": "default"
+          "Store": "little_farms_store_view"
         },
         "cs": {
-          "Magento-Store-Code": "main_website_store",
-          "Magento-Store-View-Code": "default",
-          "Magento-Website-Code": "base"
+          "Magento-Store-Code": "little_farms_store",
+          "Magento-Store-View-Code": "little_farms_store_view",
+          "Magento-Website-Code": "little_farms"
         }
       },
       "commerce-b2b-enabled": false,
