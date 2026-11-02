@@ -459,10 +459,6 @@
     ]
   },
   {
-    "id": "product-reviews",
-    "fields": []
-  },
-  {
     "id": "product-list-page",
     "fields": [
       {
@@ -495,6 +491,10 @@
         "label": "Current SKU"
       }
     ]
+  },
+  {
+    "id": "product-reviews",
+    "fields": []
   },
   {
     "id": "targeted-block",
