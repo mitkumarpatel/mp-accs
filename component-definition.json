@@ -607,16 +607,6 @@
               "type": "key-value-block"
             }
           }
-        },
-        {
-          "title": "Product Reviews",
-          "id": "product-reviews",
-          "model": "product-reviews",
-          "plugins": {
-            "da": {
-              "type": "key-value-block"
-            }
-          }
         }
       ]
     }
